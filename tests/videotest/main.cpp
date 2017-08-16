@@ -19,8 +19,8 @@ uint32_t color_buf[32 * 32];
 void redraw() {
   int w = _screen.width / N;
   int h = _screen.height / N;
-  int block_size = w * h;
-  assert(block_size <= sizeof(color_buf) / sizeof(color_buf[0]));
+  int  block_size = w * h;
+  assert(block_size <= (int)(sizeof(color_buf) / sizeof(color_buf[0])));
 
   int x, y, k;
   for (y = 0; y < N; y ++) {
