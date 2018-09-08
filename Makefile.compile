@@ -1,0 +1,72 @@
+# Compilation flags
+ARCH_SPLIT = $(subst -, ,$(ARCH))
+ISA        = $(word 1,$(ARCH_SPLIT))
+PLATFORM   = $(word 2,$(ARCH_SPLIT))
+
+ifeq ($(PLATFORM), navy)
+NAVY_LIBS = libndl libos libc
+INC_DIR += $(addsuffix /include/, $(addprefix $(NAVY_HOME)/libs/, $(NAVY_LIBS)))
+endif
+
+AS = $(CROSS_COMPILE)gcc
+CC = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+LD = $(CROSS_COMPILE)ld
+OBJCOPY = $(CROSS_COMPILE)objcopy
+READELF = $(CROSS_COMPILE)readelf
+
+ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
+
+INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
+INCLUDES += -I$(AM_HOME)/am/arch/$(ARCH)/include
+CFLAGS   += -std=gnu11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -fno-builtin
+CXXFLAGS += -std=c++11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -fno-builtin
+ASFLAGS  +=                -MMD                     $(INCLUDES) -D$(ISA_DEF)
+
+ifeq ($(ISA), native)
+CFLAGS_COMMON = -fpie
+CFLAGS   += $(CFLAGS_COMMON)
+CXXFLAGS += $(CFLAGS_COMMON)
+ASFLAGS  += -fpie -pie
+endif
+
+ifeq ($(ISA), x86)
+CFLAGS_COMMON = -m32 -fno-pic -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -march=i386 -mstringop-strategy=unrolled_loop
+CFLAGS   += $(CFLAGS_COMMON)
+CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
+ASFLAGS  += -m32
+endif
+
+ifeq ($(ISA), am_native)
+CFLAGS_COMMON = -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-reorder-functions
+CFLAGS   += $(CFLAGS_COMMON)
+CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
+endif
+
+# Files to be compiled
+OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
+
+# Compilation patterns
+$(DST_DIR)/%.o: %.cpp
+	@echo + CXX $<
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -c -o $@ $<
+$(DST_DIR)/%.o: %.c
+	@echo + CC $<
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -c -o $@ $<
+$(DST_DIR)/%.o: %.S
+	@echo + AS $<
+	@mkdir -p $(dir $@)
+	@$(AS) $(ASFLAGS) -c -o $@ $<
+
+# Depencies
+DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
+-include $(DEPS)
+
+# Dependent AM and libraries
+.PHONY: $(LIBS) am
+am:
+	@$(MAKE) -C $(AM_HOME)
+$(sort $(LIBS)): %:
+	@$(MAKE) -C $(AM_HOME)/libs/$*

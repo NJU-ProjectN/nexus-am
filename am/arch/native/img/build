@@ -1,0 +1,6 @@
+#!/bin/bash
+
+DEST=$1
+shift
+
+g++ -pie -o "$DEST" -Wl,--start-group $@ -Wl,--end-group -lSDL2 -lGL -lrt
