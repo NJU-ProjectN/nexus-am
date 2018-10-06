@@ -1,7 +1,7 @@
 #include "klib.h"
 #include <stdarg.h>
 
-#ifndef __ISA_NATIVE__
+#if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 int printf(const char *fmt, ...) {
   return 0;
