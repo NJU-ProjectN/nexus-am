@@ -65,30 +65,30 @@ int main() {
     current = bench;
     setting = &bench->settings[SETTING];
     const char *msg = bench_check(bench);
-    printk("[%s] %s: ", bench->name, bench->desc);
+    printf("[%s] %s: ", bench->name, bench->desc);
     if (msg != NULL) {
-      printk("Ignored %s\n", msg);
+      printf("Ignored %s\n", msg);
     } else {
       unsigned long msec = ULONG_MAX;
       int succ = 1;
       for (int i = 0; i < REPEAT; i ++) {
         Result res;
         run_once(bench, &res);
-        printk(res.pass ? "*" : "X");
+        printf(res.pass ? "*" : "X");
         succ &= res.pass;
         if (res.msec < msec) msec = res.msec;
       }
 
-      if (succ) printk(" Passed.");
-      else printk(" Failed.");
+      if (succ) printf(" Passed.");
+      else printf(" Failed.");
 
       pass &= succ;
 
       unsigned long cur = score(bench, 0, msec);
 
-      printk("\n");
+      printf("\n");
       if (SETTING != 0) {
-        printk("  min time: %d ms [%d]\n", (unsigned int)msec, (unsigned int)cur);
+        printf("  min time: %d ms [%d]\n", (unsigned int)msec, (unsigned int)cur);
       }
 
       bench_score += cur;
@@ -97,13 +97,13 @@ int main() {
 
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
   
-  printk("==================================================\n");
-  printk("MicroBench %s", pass ? "PASS" : "FAIL");
+  printf("==================================================\n");
+  printf("MicroBench %s", pass ? "PASS" : "FAIL");
   if (SETTING != 0) {
-    printk("        %d Marks\n", (unsigned int)bench_score);
-    printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
+    printf("        %d Marks\n", (unsigned int)bench_score);
+    printf("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
   } else {
-    printk("\n");
+    printf("\n");
   }
   _halt(0);
   return 0;

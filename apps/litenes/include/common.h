@@ -11,7 +11,7 @@ typedef int bool;
 #define true  1
 #define false 0
 
-// #define log(fmt, ...) printk("%s:%d: " fmt, __func__, __LINE__, ## __VA_ARGS__)
+// #define log(fmt, ...) printf("%s:%d: " fmt, __func__, __LINE__, ## __VA_ARGS__)
 #define log(fmt, ...)
 
 static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
