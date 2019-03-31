@@ -1,72 +1,41 @@
-# Compilation flags
-ARCH_SPLIT = $(subst -, ,$(ARCH))
-ISA        = $(word 1,$(ARCH_SPLIT))
-PLATFORM   = $(word 2,$(ARCH_SPLIT))
+$(shell mkdir -p $(DST_DIR))
 
-ifeq ($(PLATFORM), navy)
-NAVY_LIBS = libndl libos libc
-INC_DIR += $(addsuffix /include/, $(addprefix $(NAVY_HOME)/libs/, $(NAVY_LIBS)))
-endif
-
-AS = $(CROSS_COMPILE)gcc
-CC = $(CROSS_COMPILE)gcc
-CXX = $(CROSS_COMPILE)g++
-LD = $(CROSS_COMPILE)ld
-OBJCOPY = $(CROSS_COMPILE)objcopy
-READELF = $(CROSS_COMPILE)readelf
-
-ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
-
+OBJS      = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
+AS        = $(CROSS_COMPILE)gcc
+CC        = $(CROSS_COMPILE)gcc
+CXX       = $(CROSS_COMPILE)g++
+LD        = $(CROSS_COMPILE)ld
+OBJDUMP   = $(CROSS_COMPILE)objdump
+OBJCOPY   = $(CROSS_COMPILE)objcopy
+READELF   = $(CROSS_COMPILE)readelf
 INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
-INCLUDES += -I$(AM_HOME)/am/arch/$(ARCH)/include
-CFLAGS   += -std=gnu11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -fno-builtin
-CXXFLAGS += -std=c++11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -fno-builtin
-ASFLAGS  +=                -MMD                     $(INCLUDES) -D$(ISA_DEF)
+INCLUDES += -I$(AM_HOME)/am/include
+CFLAGS   += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) \
+            -D__ISA__=\"$(ISA)\" -D__ISA_$(shell echo $(ISA) | tr a-z A-Z)__ \
+            -D__ARCH__=$(ARCH) -D__ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _) \
+            -DARCH_H=\"arch/$(ARCH).h\" \
+            -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector
 
-ifeq ($(ISA), native)
-CFLAGS_COMMON = -fpie
-CFLAGS   += $(CFLAGS_COMMON)
-CXXFLAGS += $(CFLAGS_COMMON)
-ASFLAGS  += -fpie -pie
-endif
-
-ifeq ($(ISA), x86)
-CFLAGS_COMMON = -m32 -fno-pic -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -march=i386 -mstringop-strategy=unrolled_loop
-CFLAGS   += $(CFLAGS_COMMON)
-CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
-ASFLAGS  += -m32
-endif
-
-ifeq ($(ISA), am_native)
-CFLAGS_COMMON = -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-reorder-functions
-CFLAGS   += $(CFLAGS_COMMON)
-CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
-endif
-
-# Files to be compiled
-OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
-
-# Compilation patterns
-$(DST_DIR)/%.o: %.cpp
-	@echo + CXX $<
-	@mkdir -p $(dir $@)
-	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(DST_DIR)/%.o: %.c
-	@echo + CC $<
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	@mkdir -p $(dir $@) && echo + CC $<
+	@$(CC) -std=gnu11 $(CFLAGS) -c -o $@ $(realpath $<)
+
+$(DST_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@) && echo + CXX $<
+	@$(CXX) -std=c++11 -ffreestanding -fno-rtti -fno-exceptions $(CXXFLAGS) $(CFLAGS) -c -o $@ $(realpath $<)
+
 $(DST_DIR)/%.o: %.S
-	@echo + AS $<
-	@mkdir -p $(dir $@)
-	@$(AS) $(ASFLAGS) -c -o $@ $<
+	@mkdir -p $(dir $@) && echo + AS $<
+	@$(AS) -MMD $(INCLUDES) $(ASFLAGS) -c -o $@ $(realpath $<)
 
-# Depencies
-DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
--include $(DEPS)
+# Dependencies (gcc generated .d)
+-include $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
 
-# Dependent AM and libraries
-.PHONY: $(LIBS) am
+# Libraries
 am:
-	@$(MAKE) -C $(AM_HOME)
+	@$(MAKE) -s -C $(AM_HOME)
+
 $(sort $(LIBS)): %:
-	@$(MAKE) -C $(AM_HOME)/libs/$*
+	@$(MAKE) -s -C $(AM_HOME)/libs/$*
+
+.PHONY: $(LIBS) am
