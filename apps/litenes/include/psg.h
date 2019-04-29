@@ -1,10 +1,7 @@
-// #define psg_io_read(...) 0xFF
-// #define psg_io_write(...) /**/
-
-#include "common.h"
-
 #ifndef PSG_H
 #define PSG_H
+
+#include "common.h"
 
 extern unsigned char psg_joy1[8];
 
