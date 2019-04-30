@@ -1,8 +1,9 @@
 #include "psg.h"
 #include <amdev.h>
+#include <klib.h>
 
-static byte prev_write;
 static int p = 10;
+static int key_state[256];
 
 static int MAP[256] = {
   0, // On/Off
@@ -17,9 +18,7 @@ static int MAP[256] = {
   255,
 };
 
-extern int key_state[];
-
-inline byte psg_io_read(word address) {
+byte psg_io_read(word address) {
   // Joystick 1
   if (address == 0x4016) {
     if (p++ < 9) {
@@ -29,7 +28,8 @@ inline byte psg_io_read(word address) {
   return 0;
 }
 
-inline void psg_io_write(word address, byte data) {
+void psg_io_write(word address, byte data) {
+  static byte prev_write;
   if (address == 0x4016) {
     if ((data & 1) == 0 && prev_write == 1) {
       // strobe
@@ -37,4 +37,17 @@ inline void psg_io_write(word address, byte data) {
     }
   }
   prev_write = data & 1;
+}
+
+void psg_detect_key() {
+  int key = read_key();
+  for (; key != _KEY_NONE; key = read_key()) {
+    int down = (key & 0x8000) != 0;
+    int code = key & ~0x8000;
+    key_state[code] = down;
+  }
+}
+
+void psg_init() {
+  key_state[0] = 1;
 }

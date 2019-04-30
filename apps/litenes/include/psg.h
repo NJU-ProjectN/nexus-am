@@ -3,9 +3,9 @@
 
 #include "common.h"
 
-extern unsigned char psg_joy1[8];
-
 byte psg_io_read(word address);
 void psg_io_write(word address, byte data);
+void psg_init();
+void psg_detect_key();
 
 #endif

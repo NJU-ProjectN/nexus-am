@@ -2,13 +2,20 @@
 #include "cpu.h"
 #include "memory.h"
 #include "ppu.h"
+#include "psg.h"
 #include <klib.h>
 #include <amdev.h>
 
-int key_state[256];
-static byte *buf;
 static int frame_cnt;
 bool candraw() { return frame_cnt % 3 == 0; }
+
+static uint32_t canvas[W * H];
+
+void draw(int x, int y, int idx) {
+  if (x >= 0 && x < W && y >= 0 && y < H && candraw()) {
+    canvas[y * W + x] = palette[idx];
+  }
+}
 
 typedef struct {
   char signature[4];
@@ -18,6 +25,7 @@ typedef struct {
   byte reserved[8];
 } ines_header;
 
+static byte *buf;
 static ines_header *fce_rom_header;
 
 byte *romread(int size) {
@@ -88,7 +96,6 @@ void wait_for_frame() {
 // FCE Lifecycle
 
 void fce_run() {
-  key_state[0] = 1;
   gtime = uptime();
   int nr_draw = 0;
   uint32_t last = gtime;
@@ -98,13 +105,7 @@ void fce_run() {
 
     while (scanlines-- > 0) {
       ppu_cycle();
-
-      int key = read_key();
-      for (; key != _KEY_NONE; key = read_key()) {
-        int down = (key & 0x8000) != 0;
-        int code = key & ~0x8000;
-        key_state[code] = down;
-      }
+      psg_detect_key();
     }
 
     nr_draw ++;
@@ -115,8 +116,6 @@ void fce_run() {
     }
   }
 }
-
-uint32_t canvas[W * H];
 
 void fce_update_screen() {
   frame_cnt ++;

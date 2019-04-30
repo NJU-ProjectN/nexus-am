@@ -8,6 +8,7 @@
 #define H 240
 
 void fce_update_screen();
+void draw(int x, int y, int idx);
 
 static const uint32_t palette[64] = {
   0x808080, 0x0000BB, 0x3700BF, 0x8400A6, 0xBB006A, 0xB7001E, 0xB30000, 0x912600,

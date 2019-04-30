@@ -4,9 +4,13 @@
 #include "ppu.h"
 #include "common.h"
 
+CPU_STATE cpu;
+
 // CPU Memory
 
-inline byte cpu_ram_read(word address) {
+byte CPU_RAM[0x8000];
+
+byte cpu_ram_read(word address) {
   return CPU_RAM[address & 0x7FF];
 }
 
@@ -14,11 +18,49 @@ void cpu_ram_write(word address, byte data) {
   CPU_RAM[address & 0x7FF] = data;
 }
 
+static byte op_code;             // Current instruction code
+int op_value, op_address; // Arguments for current instruction
+int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
+static unsigned long long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
+
+static void (*cpu_op_address_mode[256])();       // Array of address modes
+static void (*cpu_op_handler[256])();            // Array of instruction function pointers
+static bool cpu_op_in_base_instruction_set[256]; // true if instruction is in base 6502 instruction set
+static char *cpu_op_name[256];                   // Instruction names
+static int cpu_op_cycles[256];                   // CPU cycles used by instructions
+
+static const byte cpu_zn_flag_table[256] = {
+  zero_flag,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
+};
+
 // Interrupt Addresses
 
-inline word cpu_nmi_interrupt_address()   { return memory_readw(0xFFFA); }
-inline word cpu_reset_interrupt_address() { return memory_readw(0xFFFC); }
-inline word cpu_irq_interrupt_address()   { return memory_readw(0xFFFE); }
+word cpu_nmi_interrupt_address()   { return memory_readw(0xFFFA); }
+word cpu_reset_interrupt_address() { return memory_readw(0xFFFC); }
+word cpu_irq_interrupt_address()   { return memory_readw(0xFFFE); }
 
 // Stack Routines
 
@@ -543,7 +585,7 @@ void cpu_interrupt() {
   }
 }
 
-inline unsigned long long cpu_clock() {
+unsigned long long cpu_clock() {
   return cpu_cycles;
 }
 
