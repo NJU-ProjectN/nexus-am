@@ -1,3 +1,4 @@
+#include <am.h>
 #include <mips32.h>
 #include <nemu.h>
 

@@ -1,3 +1,4 @@
+#include <am.h>
 #include <riscv32.h>
 #include <nemu.h>
 
