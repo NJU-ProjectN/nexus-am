@@ -6,8 +6,9 @@
 #include <amdev.h>
 
 int key_state[256];
-int frame_cnt;
 static byte *buf;
+static int frame_cnt;
+bool candraw() { return frame_cnt % 3 == 0; }
 
 typedef struct {
   char signature[4];
@@ -119,8 +120,7 @@ uint32_t canvas[W * H];
 
 void fce_update_screen() {
   frame_cnt ++;
-  if (frame_cnt != 3) return;
-  frame_cnt = 0;
+  if (!candraw()) return;
 
   int idx = ppu_ram_read(0x3F00);
   uint32_t bgc = palette[idx];

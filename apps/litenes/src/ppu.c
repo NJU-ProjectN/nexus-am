@@ -15,7 +15,7 @@ byte ppu_addr_latch;
 extern uint32_t canvas[];
 
 void draw(int x, int y, int idx) {
-  if (x >= 0 && x < W && y >= 0 && y < H) {
+  if (x >= 0 && x < W && y >= 0 && y < H && candraw()) {
     canvas[y * W + x] = palette[idx];
   }
 }
