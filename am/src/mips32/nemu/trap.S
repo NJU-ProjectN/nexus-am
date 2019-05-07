@@ -23,8 +23,8 @@ f(30) f(31)
 #define CP0_EPC    14
 
 .set noat
-.globl asm_trap
-asm_trap:
+.globl __am_asm_trap
+__am_asm_trap:
   move $k0, $sp
   addiu $sp, $sp, -CONTEXT_SIZE
 
@@ -48,7 +48,7 @@ asm_trap:
   mtc0 $t3, $CP0_STATUS
 
   move $a0, $sp
-  jal irq_handle
+  jal __am_irq_handle
 
   lw $t0, OFFSET_LO($sp)
   lw $t1, OFFSET_HI($sp)

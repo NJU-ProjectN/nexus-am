@@ -4,14 +4,8 @@
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-static void* (*pgalloc_usr)(size_t);
-static void (*pgfree_usr)(void*);
-
-_Area segments[] = {      // Kernel memory mappings
-  {.start = (void*)0,          .end = (void*)PMEM_SIZE}
-};
-
-#define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
+static void* (*pgalloc_usr)(size_t) = NULL;
+static void (*pgfree_usr)(void*) = NULL;
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
@@ -31,11 +25,11 @@ void _unprotect(_AddressSpace *p) {
 }
 
 static _AddressSpace *cur_as = NULL;
-void get_cur_as(_Context *c) {
+void __am_get_cur_as(_Context *c) {
   c->prot = cur_as;
 }
 
-void _switch(_Context *c) {
+void __am_switch(_Context *c) {
   cur_as = c->prot;
 }
 
