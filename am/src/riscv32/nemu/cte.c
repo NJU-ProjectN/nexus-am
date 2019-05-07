@@ -3,7 +3,7 @@
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
-_Context* irq_handle(_Context *c) {
+_Context* __am_irq_handle(_Context *c) {
   _Context *next = c;
   if (user_handler) {
     _Event ev = {0};
@@ -20,11 +20,11 @@ _Context* irq_handle(_Context *c) {
   return next;
 }
 
-extern void asm_trap(void);
+extern void __am_asm_trap(void);
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   // initialize exception entry
-  asm volatile("csrw stvec, %0" : : "r"(asm_trap));
+  asm volatile("csrw stvec, %0" : : "r"(__am_asm_trap));
 
   // register event handler
   user_handler = handler;
