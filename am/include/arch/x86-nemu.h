@@ -2,17 +2,15 @@
 #define __ARCH_H__
 
 struct _Context {
+  uintptr_t esi, ebx, eax, eip, edx, err, eflags, ecx, cs, esp, edi, ebp;
   struct _AddressSpace *prot;
-  uintptr_t edi, esi, ebp, esp;
-  uintptr_t ebx, edx, ecx, eax;      // Register saved by pushal
-  int       irq;                     // # of irq
-  uintptr_t err, eip, cs, eflags;    // Execution state before trap
+  int irq;
 };
 
 #define GPR1 eax
-#define GPR2 ebx
-#define GPR3 ecx
-#define GPR4 edx
-#define GPRx eax
+#define GPR2 eip
+#define GPR3 eip
+#define GPR4 eip
+#define GPRx eip
 
 #endif
