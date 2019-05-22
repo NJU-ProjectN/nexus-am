@@ -50,8 +50,6 @@ asm_trap:
   move $a0, $sp
   jal irq_handle
 
-  move $sp, $v0
-
   lw $t0, OFFSET_LO($sp)
   lw $t1, OFFSET_HI($sp)
   lw $t3, OFFSET_STATUS($sp)

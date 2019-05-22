@@ -2,7 +2,7 @@
 #define __ARCH_H__
 
 struct _Context {
-  uintptr_t esi, ebx, eax, eip, edx, err, eflags, ecx, cs, esp, edi, ebp;
+  uintptr_t esi, ebx, eax, eip, edx, eflags, ecx, cs, esp, edi, ebp;
   struct _AddressSpace *prot;
   int irq;
 };

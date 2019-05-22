@@ -39,8 +39,6 @@ asm_trap:
   mv a0, sp
   jal irq_handle
 
-  mv sp, a0
-
   lw t1, OFFSET_STATUS(sp)
   lw t2, OFFSET_EPC(sp)
   csrw sstatus, t1
