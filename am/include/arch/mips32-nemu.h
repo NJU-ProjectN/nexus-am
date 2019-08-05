@@ -6,7 +6,7 @@ struct _Context {
   struct _AddressSpace *prot;
 };
 
-#define GPR1 gpr[4]
+#define GPR1 gpr[2]
 #define GPR2 gpr[0]
 #define GPR3 gpr[0]
 #define GPR4 gpr[0]
