@@ -14,29 +14,28 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_AddressSpace *p) {
-  p->ptr = (PDE*)(pgalloc_usr(1));
-  p->pgsize = 4096;
+int _protect(_AddressSpace *as) {
+  as->ptr = (PDE*)(pgalloc_usr(1));
 
   return 0;
 }
 
-void _unprotect(_AddressSpace *p) {
+void _unprotect(_AddressSpace *as) {
 }
 
 static _AddressSpace *cur_as = NULL;
 void __am_get_cur_as(_Context *c) {
-  c->prot = cur_as;
+  c->as = cur_as;
 }
 
 void __am_switch(_Context *c) {
-  cur_as = c->prot;
+  cur_as = c->as;
 }
 
-int _map(_AddressSpace *p, void *va, void *pa, int mode) {
+int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
   return NULL;
 }
