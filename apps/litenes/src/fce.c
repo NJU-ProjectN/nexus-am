@@ -142,11 +142,22 @@ void fce_update_screen() {
   for (int i = 0; i < W * H; i ++) canvas[i] = bgc;
 }
 
-int main() {
+#include "roms/gen/roms.h"
+
+int main(const char *rom_name) {
   _ioe_init();
 
-  extern char rom_mario_nes[];
-  fce_load_rom(rom_mario_nes);
+  struct rom *rom = &roms[0];
+  for (int i = 1; i < nroms; i++) {
+    struct rom *cur = &roms[i];
+    if (strcmp(cur->name, rom_name) == 0) {
+      rom = cur;
+    }
+  }
+
+  printf("LiteNES ROM: %s\n", rom->name);
+
+  fce_load_rom(rom->body);
   fce_init();
   printf("Initialization finish!\n");
   fce_run();
